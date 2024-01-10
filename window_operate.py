@@ -14,6 +14,8 @@ import numpy as np
 import sys
 from PyQt5.QtWidgets import QApplication
 import d3dshot
+from PyQt5.QtGui import *
+
 def get_window_handle(class_name=None, title=None):
     """
     通过类名和标题查找窗口句柄.
@@ -78,6 +80,18 @@ def perform_background_click(hwnd, x, y,cnt=1):
         if count>=cnt:
             break
         time.sleep(0.2)
+        win32api.SendMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
+        win32api.SendMessage(hwnd, win32con.WM_LBUTTONUP, 0, lParam)
+        count+=1
+        
+# 后台点击操作
+def perform_background_click1(hwnd, x, y,cnt=10):
+    lParam = win32api.MAKELONG(int(x), int(y))
+    count = 0
+    while True:
+        if count>=cnt:
+            break
+        time.sleep(0.01)
         win32api.SendMessage(hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
         win32api.SendMessage(hwnd, win32con.WM_LBUTTONUP, 0, lParam)
         count+=1
@@ -157,13 +171,44 @@ def  screen_fullshot():
 
 
  
+class ndarray(np.ndarray):
+    def setTag(self, tag):
+        self.__tag = tag
+def qImage2array(img,share_memory=False):
+    """ Creates a numpy测试 array from a QImage.
+        If share_memory is True, the numpy测试 array and the QImage is shared.
+        Be careful: make sure the numpy测试 array is destroyed before the image,
+        otherwise the array will point to unreserved memory!!
+    """
+    assert isinstance(img, QImage), "img must be a QtGui.QImage object"
+    assert img.format() == QImage.Format.Format_RGB32, \
+        "img format must be QImage.Format.Format_RGB32, got: {}".format(img.format())
+    img_size = img.size()
+    buffer  :sip.voidptr= img.constBits()
+    depth=(img.depth()//8)
+    # arr=buffer.asarray(img.width()*img.height()*depth)
+    buffer.setsize(img.width()*img.height()*depth)
+    arr = ndarray(shape  = (img_size.height(), img_size.width(), depth),
+                     buffer = buffer,
+                     dtype  = np.uint8)
+    if share_memory:
+        arr.setTag(img)
+        return arr
+    else:
+        return arr.copy()
+
 
      
-def screen_fullshot1(x,y,w,h):
+def shot1(x,y,w,h,file_name):
     app = QApplication(sys.argv)
     screen = QApplication.primaryScreen()
     if screen is None:
         print('screen is None')
         exit(0)
     originalPixmap = screen.grabWindow(QApplication.desktop().winId(),x,y,w,h)
-    originalPixmap.save('444.jpg', 'png')
+    originalPixmap.save(file_name+'.jpg', 'png')
+    img :QImage = originalPixmap.toImage()
+    QImg=img
+    img=qImage2array(img,share_memory=True)
+    return img,QImg
+    

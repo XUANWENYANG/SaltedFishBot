@@ -32,6 +32,10 @@ if __name__ == '__main__':
     thread2 = threading.Thread(target=fuben_tower_rountin, args=(hwnd,))
     thread2.start()
 
+    # 连击的线程
+    thread3 = threading.Thread(target=lianji_rountin_long, args=(hwnd,))
+    thread3.start()
+    
     time.sleep(1)
     # 主函数
     while True:
@@ -50,13 +54,15 @@ if __name__ == '__main__':
             fuben_tower(hwnd,h,w)
         elif  cmd_input == "daily":
             daily_test(hwnd,h,w)
+        elif cmd_input == "lianji":
+            lian_ji(hwnd,h,w)
         elif cmd_input =="shot":
             show_window(hwnd)
-            screen_fullshot1(x,y,w,h)
-            # d = d3dshot.create(capture_output="numpy")
-            # d.display = d.displays[0]
-            # d.screenshot_to_disk()
-            # shot(hwnd,h,w)
+            #0.21 0.295 
+            for i in range(8):
+                jar,_=shot1(x+0.25*w,y+(0.21+0.0845*i)*h,250,40,"isjar"+str(i))
+        elif cmd_input == "jar":
+            judge_jar(hwnd,x,y,w,h)
         elif  cmd_input == "exit":
             print("Bye!")
             os._exit(1)
